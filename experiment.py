@@ -1,7 +1,7 @@
 import json
 import requests
 
-API_URL = 'http://localhost:8000/api/'
+API_URL = 'http://localhost:8000/api'
 
 class Experiment:
     def __init__(self,
@@ -14,22 +14,31 @@ class Experiment:
         self.name = name
         self.parameters = parameters
         self.outcome = outcome
+        self.access_token = access_token
         api_params = {'name': name}
-        r = requests.get(API_URL + 'find_experiment', params=api_params).json()
+        r = self.call_api('find_experiment', method='get', params=api_params)
         if (r['result']): # found experiment
             print 'resuming experiment ' + name + '...'
         else:
             api_params['parameters'] = parameters
             api_params['outcome'] = outcome
-            r = requests.post(API_URL + 'create_experiment/', data=json.dumps(api_params)).json()
+            r = self.call_api('create_experiment', method='post', params=api_params)
             if 'error' in r:
                 raise RuntimeError('failed to create experiment ' + name + '. error: ' + r['error'])
             else:
                 print 'experiment ' + name + ' was created.'
 
+    def call_api(self, name, method, params):
+        url = '{0}/{1}/'.format(API_URL, name)
+        headers = {'Authorization': 'Bearer ' + self.access_token}
+        if method.lower() == 'post':
+            return requests.post(url, headers=headers, data=json.dumps(params)).json()
+        elif method.lower() == 'get':
+            return requests.get(url, headers=headers, params=params).json()
+
     def suggest(self):
         api_params = {'name': self.name}
-        r = requests.get(API_URL + 'get_suggestion', params=api_params).json()
+        r = self.call_api('get_suggestion', method='get', params=api_params)
         if 'error' in r:
             raise RuntimeError('failed to get suggestion from spearmint. error: ' + r['error'])
         else:
@@ -37,6 +46,6 @@ class Experiment:
 
     def update(self, param_values, outcome_val):
         api_params = {'name': self.name, 'outcome_val': outcome_val}
-        r = requests.post(API_URL + 'post_update/', data=api_params).json()
+        r = self.call_api('post_update', method='post', params=api_params)
         if 'error' in r:
             raise RuntimeError('failed to post update to spearmint. error: ' + r['error'])
