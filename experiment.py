@@ -1,7 +1,8 @@
 import json
 import requests
 
-API_URL = 'http://localhost:8000/api'
+API_URL = 'http://ec2-52-11-215-50.us-west-2.compute.amazonaws.com/api'
+#API_URL = 'http://localhost:8000/api'
 
 class Experiment:
     def __init__(self,
